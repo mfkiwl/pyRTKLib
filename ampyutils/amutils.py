@@ -11,11 +11,26 @@ import logging
 from pandas import DataFrame
 import subprocess
 from datetime import datetime
+from typing import Tuple
+import matplotlib._color_data as mcd
+import enum
+import numpy as np
+import pandas as pd
+from tabulate import tabulate
 
+from ampyutils import exeprogram
 from GNSS import gpstime
 import am_config as amc
 
 __author__ = 'amuls'
+
+
+# Enum for size units
+class SIZE_UNIT(enum.Enum):
+    BYTES = 1
+    KB = 2
+    MB = 3
+    GB = 4
 
 
 def mkdir_p(path):
@@ -112,7 +127,7 @@ def get_filebasename(path):
     return filename
 
 
-def printHeadTailDataFrame(df, name='DataFrame', head=10, tail=10, index=True):
+def printHeadTailDataFrame(df: pd.DataFrame, name: str, index: str = True, head: int = 10, tail: int = 10):
     """
     printHeadTailDataFrame prints the head first/tail last rows of the dataframe df
 
@@ -124,14 +139,19 @@ def printHeadTailDataFrame(df, name='DataFrame', head=10, tail=10, index=True):
     :type head: int
     :param tail: nr of lies from start of df
     :type tail: int
-    :param index: display th eindex of the dataframe or not
+    :param index: display the index of the dataframe or not
     :type: bool
     """
     if df.shape[0] <= (head + tail):
         print('\n   ...  %s (size %d)\n%s' % (colored(name, 'green'), df.shape[0], df.to_string(index=index)))
     else:
-        print('\n   ... Head of %s (size %d)\n%s' % (colored(name, 'green'), df.shape[0], df.head(n=head).to_string(index=index)))
+        print('\n   ... Head of %s (size %d)' % (colored(name, 'green'), df.shape[0]))
+        print(df.head(n=head).to_string(index=index))
         print('   ... Tail of %s (size %d)\n%s' % (colored(name, 'green'), df.shape[0], df.tail(n=tail).to_string(index=index)))
+
+
+def pprint_df(dframe: pd.DataFrame, tablefmt: str = 'simple'):
+    print(tabulate(dframe, headers='keys', tablefmt=tablefmt, showindex=False))
 
 
 def logHeadTailDataFrame(logger: logging.Logger, callerName: str, df: DataFrame, dfName: str = 'DataFrame', head: int = 10, tail: int = 10, index: bool = True):
@@ -347,3 +367,56 @@ def run_subprocess(sub_proc: list, logger: logging.Logger):
 def DT_convertor(o):
     if isinstance(o, datetime):
         return o.__str__()
+
+
+def create_colormap_font(nrcolors: int, font_size: int) -> Tuple[list, dict]:
+    """
+    create_colormap_font creates a colormap for the number entered and returns a color list and dict with fonts for title and axes
+    """
+    # get the color names
+    color_names = [name for name in mcd.XKCD_COLORS]
+    color_step = len(color_names) // nrcolors
+    color_used = color_names[::color_step]
+
+    font = {'family': 'serif',
+            # 'color': 'darkred',
+            'weight': 'bold',
+            'size': font_size,
+            }
+
+    return color_used, font
+
+
+def convert_unit(size_in_bytes, unit):
+    """ Convert the size from bytes to other units like KB, MB or GB"""
+    if unit == SIZE_UNIT.KB:
+        return size_in_bytes / 1024
+    elif unit == SIZE_UNIT.MB:
+        return size_in_bytes / (1024 * 1024)
+    elif unit == SIZE_UNIT.GB:
+        return size_in_bytes / (1024 * 1024 * 1024)
+    else:
+        return size_in_bytes
+
+
+def wavg(group: dict, avg_name: str, weight_name: str) -> float:
+    """ http://stackoverflow.com/questions/10951341/pandas-dataframe-aggregate-function-using-multiple-columns
+    In rare instance, we may not have weights, so just return the mean. Customize this if your business case
+    should return otherwise.
+    """
+    coordinate = group[avg_name]
+    invVariance = 1 / np.square(group[weight_name])
+
+    try:
+        return (coordinate * invVariance).sum() / invVariance.sum()
+    except ZeroDivisionError:
+        return coordinate.mean()
+
+
+def stddev(crd: pd.Series, avgCrd: float) -> float:
+    """
+    stddev calculates the standard deviation of series
+    """
+    dCrd = crd.subtract(avgCrd)
+
+    return dCrd.std()

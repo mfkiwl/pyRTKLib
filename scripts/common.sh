@@ -41,10 +41,11 @@ function change_line {
 
     # echo ${OLD_LINE_PATTERN}
     # echo ${NEW_LINE}
+    # echo ${FILE}
 
     local NEW=$(echo "${NEW_LINE}" | escape_slashes)
 
-    # /bin/sed -i "s+BEGP,19,134,19134,/home/amuls/RxTURP/BEGPIOS/BEGP/19134,true*+BEGP,19,134,19134,\/home\/amuls\/RxTURP\/BEGPIOS\/BEGP\/19134,true,GPRS1340.19O,75M,GPRS1340.19E,96K+g" /home/amuls/RxTURP/BEGPIOS/BEGP_data.t
+    # /bin/sed -i "s+TURP,19,134,19134,/home/amuls/RxTURP/BEGPIOS/TURP/19134,true*+TURP,19,134,19134,\/home\/amuls\/RxTURP\/BEGPIOS\/TURP\/19134,true,GPRS1340.19O,75M,GPRS1340.19E,96K+g" /home/amuls/RxTURP/BEGPIOS/BEGP_data.t
 
     ${SED} -i.bak "s+${OLD_LINE_PATTERN}.*+${NEW}+g" ${FILE}
     # mv "${FILE}.bak" /tmp/
@@ -62,16 +63,21 @@ RXTURPROOT=${HOME}/RxTURP/BEGPIOS
 GNSSRAWDATA=${RXTURPROOT}'/'${RXTYPE}'_data.t'
 
 # pythonscripts
-PYSBFDAILY=${PYHOMEDIR}/pySBFDaily.py
-PYCONVBIN=${PYHOMEDIR}/pyconvbin.py
+PYSBFDAILY=${PYHOMEDIR}/pysbfdaily.py
+GFZRNX_CONVBIN=${PYHOMEDIR}/gfzrnx_convbin.py
 PYFTPOSNAV=${PYHOMEDIR}/pyftposnav.py
 PYRTKPROC=${PYHOMEDIR}/pyrtkproc.py
 PYRTKPLOT=${PYHOMEDIR}/pyrtkplot.py
 PYPOS2MAVG=${PYHOMEDIR}/pos2movavg.py
+RNX_OBS_TABULAR=${PYHOMEDIR}/rnx_obs_tabular.py
+
+# galb related scripts
+GLABPROC=${PYHOMEDIR}/glab_processing.py
+GLABMSGOUTPUT=${PYHOMEDIR}/glab_msg_output.py
 
 # log files
-LOGPYRTKPROC=${PYHOMEDIR}/pyrtkproc.log
-LOGPYRTKPLOT=${PYHOMEDIR}/pyrtkplot.log
+# LOGPYRTKPROC=${PYHOMEDIR}/pyrtkproc.log
+# LOGPYRTKPLOT=${PYHOMEDIR}/pyrtkplot.log
 
 # the gnss and corresponding marker name lists
 gnss=([0]='Galileo' [1]='GPS Navstar' [2]='Combined EG')
@@ -107,7 +113,7 @@ echo
 echo 'PYHOMEDIR = '${PYHOMEDIR}
 echo 'PYSBFDAILY = '${PYSBFDAILY}
 echo 'RXTURPROOT = '${RXTURPROOT}
-echo 'PYCONVBIN = '${PYCONVBIN}
+echo 'GFZRNX_CONVBIN = '${GFZRNX_CONVBIN}
 
 echo 'PYFTPOSNAV = '${PYFTPOSNAV}
 echo 'PYRTKPROC = '${PYRTKPROC}
